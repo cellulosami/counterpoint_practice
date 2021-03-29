@@ -35,7 +35,7 @@ class CantusFirmusScore
   attr_accessor :original_valid_movements, :notes, :length, :current_available_movements, :current_note_position
 
   def initialize
-    @length = 8
+    @length = 12
     @notes = []
     @length.times do
       @notes << 0
@@ -172,7 +172,7 @@ end
 class CantusFirmusValidator
   def self.valid?(notes)
     @notes = notes
-    return self.penultimate_check && self.range_check && self.climax_check && leap_percentage_check
+    return self.penultimate_check && self.range_check && self.climax_check && leap_percentage_check && self.note_repetition_check
   end
 
   def self.penultimate_check
@@ -235,12 +235,31 @@ class CantusFirmusValidator
       return false
     end
   end
+
+  def self.note_repetition_check
+    note_count = {}
+    @notes.each do |note|
+      if note_count[note]
+        note_count[note] += 1
+      else
+        note_count[note] = 1
+      end
+    end
+
+    @acceptable_repetitions = true
+    note_count.keys.each do |key|
+      if (note_count[key].to_f / @notes.length.to_f) > 0.25
+        @acceptable_repetitions = false
+      end
+    end
+    return @acceptable_repetitions
+  end
 end
 
 class CantusFirmusValidatorWithPrintStatements
   def self.valid?(notes)
     @notes = notes
-    return self.penultimate_check && self.climax_check && self.range_check && leap_percentage_check
+    return self.penultimate_check && self.climax_check && self.range_check && leap_percentage_check && self.note_repetition_check
   end
 
   def self.penultimate_check
@@ -309,9 +328,32 @@ class CantusFirmusValidatorWithPrintStatements
       return false
     end
   end
+
+  def self.note_repetition_check
+    note_count = {}
+    @notes.each do |note|
+      if note_count[note]
+        note_count[note] += 1
+      else
+        note_count[note] = 1
+      end
+    end
+    p "note count is #{note_count}"
+
+    @acceptable_repetitions = true
+    note_count.keys.each do |key|
+      if (note_count[key].to_f / @notes.length.to_f) > 0.25
+        @acceptable_repetitions = false
+        p "unacceptable repetitions"
+      end
+    end
+    return @acceptable_repetitions
+  end
 end
 
 cantus_firmus = CantusFirmusScore.new
 cantus_firmus.build_cantus_firmus
 
-#March 25 - today I separated the cantus firmus logic into two separate classes (one for the score info, one for validation checks). I created a second version of the validation class so I could have one with print checks (for my sanity) and one without (so the code could actually run). I then added validations for the climax, range, and leap percentage. When I stopped I was working on fixing the climax check in order to only allow a climax toward the center of the cantus firmus (line 165). I am struggling because I've realized, based on my current code, that leaps will always trend toward the beginning.``
+#March 29
+#need to add many more validations
+#how do i keep track of undesirable features? to what extent do I allow them in generation?
