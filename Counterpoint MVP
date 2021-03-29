@@ -1,0 +1,46 @@
+Absolute Minimum Viable Product:
+1. User can push button
+2. App generates cantus firmus
+3. App displays cantus firmus
+
+- one route (create)
+- no database necessary? Counterpoints do not need to be saved. It is definitely useful to have them as a class/model, but technically the database is unecessary and perhaps bloat.
+- No API. All generation logic contained within backend
+
+
+
+Additional Features:
+- First species counterpoint generation
+- Second species counterpoint generation
+- Third species counterpoint generation
+- Fourth species counterpoint generation
+- Fifth species counterpoint generation
+- Selectable generation parameters:
+  - Measure length
+  - Key
+  - Mode
+  - Number of undesirable attributes allowed
+  - Specific note values
+    - Musical notation
+- App displays generated counterpoint as musical notation
+- App plays back generated counterpoint
+  - App visually follows display while playing back
+- Generated counterpoint may be cleanly printed/saved as PDF
+
+-COUNTERPOINT CHECKER
+  - A user can input counterpoint as note values
+    - A user can input counterpoint as musical notation
+  - The program will parse the input for errors and undesirable attributes
+    - errors
+    - undesirable attributes
+  - works for:
+    - cantus firmus
+    - first species
+    - second species
+    - third species
+    - fourth species
+    - fifth species
+  - App displays this information to the user
+    - as text
+    - as notation on the user's input
+  - App generates similar counterpoint with recommended changes
