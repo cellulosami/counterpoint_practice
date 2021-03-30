@@ -79,7 +79,7 @@ class CantusFirmusScore
 
   def execute_movement
     # p @notes
-    if @previously_leap == false && rand(1..100) <= 25
+    if rand(1..100) <= 25
       if @current_available_movements[@current_note_position][:leaps][0]
         leap
       else
@@ -99,7 +99,6 @@ class CantusFirmusScore
   def step
     @executed_movement = @current_available_movements[@current_note_position][:steps].sample
     @current_available_movements[@current_note_position][:steps] = @current_available_movements[@current_note_position][:steps] - [@executed_movement]
-    @previously_leap = false
   end
 
   def leap
@@ -112,7 +111,6 @@ class CantusFirmusScore
     end
     @executed_movement = leap_offered
     @current_available_movements[@current_note_position][:leaps] = @current_available_movements[@current_note_position][:leaps] - [@executed_movement]
-    @previously_leap = true
   end
 
   def cascade_movement
@@ -146,35 +144,32 @@ class CantusFirmusScore
   end
 
   def iterate
-    @current_note_position -= 1
-    while available_movement_check == false
-      @current_note_position -= 1
-      if @current_note_position < 0
-        p "no possible note combination"
-        @possible = false
-        break
-      end
-    end
-
-    if @possible == true
-      if (@notes[@current_note_position-1] - @notes[@current_note_position]).abs() <= 2
-        @previously_leap = false
+    while @current_note_position < ( @length - 2 )
+      if available_movement_check == true
+        execute_movement
+        @current_note_position += 1
+        determine_current_available_movements
+        CantusFirmusFilter.filter(@current_available_movements, @current_note_position)
       else
-        @previously_leap = true
+        @current_note_position -= 1
+        @iterations += 1
+        if @current_note_position < 0
+          p "no possible note combination"
+          @possible = false
+          break
+        end
       end
-      execute_movement
-      @current_note_position += 1
-      cascade_movement
-      @iterations += 1
     end
   end
-
+  
   def build_cantus_firmus
     determine_original_valid_movements
-    cascade_movement
+    determine_current_available_movements
     while CantusFirmusValidator.valid?(@notes) == false && @possible == true
       iterate
+      @current_note_position -= 1
     end
+
     if @possible == true
       p @notes
       p "#{@iterations} iterations"
@@ -196,6 +191,14 @@ class CantusFirmusScore
 
       build_cantus_firmus
     end
+  end
+end
+
+class CantusFirmusFilter
+  def self.filter(movements, position)
+    @movements = movements
+    @position = position
+    return @movements
   end
 end
 
