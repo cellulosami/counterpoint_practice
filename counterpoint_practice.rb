@@ -35,7 +35,7 @@ class CantusFirmusScore
   attr_accessor :original_valid_movements, :notes, :length, :current_available_movements, :current_note_position
 
   def initialize
-    @length = 12
+    @length = 8
     @notes = []
     @length.times do
       @notes << 0
@@ -46,6 +46,7 @@ class CantusFirmusScore
     @current_available_movements = []
     @mode = "ionian"
     @possible = true
+    @previously_leap = false
   end
 
   def determine_original_valid_movements
@@ -77,16 +78,18 @@ class CantusFirmusScore
   end
 
   def execute_movement
-    if @current_available_movements[@current_note_position][:steps][0] && @current_available_movements[@current_note_position][:leaps][0]
-      if rand(1..100) > 25
+    if @previously_leap == false && rand(1..100) <= 25
+      if @current_available_movements[@current_note_position][:leaps][0]
+        leap
+      else
+        step
+      end
+    else
+      if @current_available_movements[@current_note_position][:steps][0]
         step
       else
         leap
       end
-    elsif @current_available_movements[@current_note_position][:steps][0]
-      step
-    else
-      leap
     end
 
     @notes[@current_note_position+1] = @notes[@current_note_position] + @executed_movement
@@ -95,11 +98,13 @@ class CantusFirmusScore
   def step
     @executed_movement = @current_available_movements[@current_note_position][:steps].sample
     @current_available_movements[@current_note_position][:steps] = @current_available_movements[@current_note_position][:steps] - [@executed_movement]
+    @previously_leap = false
   end
 
   def leap
     @executed_movement = @current_available_movements[@current_note_position][:leaps].sample
     @current_available_movements[@current_note_position][:leaps] = @current_available_movements[@current_note_position][:leaps] - [@executed_movement]
+    @previously_leap = true
   end
 
   def cascade_movement
@@ -129,6 +134,7 @@ class CantusFirmusScore
         break
       end
     end
+
     if @possible == true
       execute_movement
       @current_note_position += 1
@@ -166,8 +172,6 @@ class CantusFirmusScore
     end
   end
 end
-
-
 
 class CantusFirmusValidator
   def self.valid?(notes)
