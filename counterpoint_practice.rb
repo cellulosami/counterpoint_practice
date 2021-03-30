@@ -35,7 +35,7 @@ class CantusFirmusScore
   attr_accessor :original_valid_movements, :notes, :length, :current_available_movements, :current_note_position
 
   def initialize
-    @length = 8
+    @length = 10
     @notes = []
     @length.times do
       @notes << 0
@@ -78,6 +78,7 @@ class CantusFirmusScore
   end
 
   def execute_movement
+    p @notes
     if @previously_leap == false && rand(1..100) <= 25
       if @current_available_movements[@current_note_position][:leaps][0]
         leap
@@ -102,7 +103,14 @@ class CantusFirmusScore
   end
 
   def leap
-    @executed_movement = @current_available_movements[@current_note_position][:leaps].sample
+    leap_selected  = false
+    while leap_selected == false
+      leap_offered = @current_available_movements[@current_note_position][:leaps].sample
+      if leap_offered.abs() < rand(1..13)
+        leap_selected = true
+      end
+    end
+    @executed_movement = leap_offered
     @current_available_movements[@current_note_position][:leaps] = @current_available_movements[@current_note_position][:leaps] - [@executed_movement]
     @previously_leap = true
   end
@@ -136,6 +144,11 @@ class CantusFirmusScore
     end
 
     if @possible == true
+      if (@notes[@current_note_position-1] - @notes[@current_note_position]).abs() <= 2
+        previously_leap = false
+      else
+        previously_leap = true
+      end
       execute_movement
       @current_note_position += 1
       cascade_movement
@@ -286,7 +299,7 @@ class CantusFirmusValidatorWithPrintStatements
       if @notes[i] > highest_note
         highest_note = @notes[i]
         p
-        if (i / @notes.length.to_f) >= 0.25 && (i / @notes.length.to_f) <= 0.75 #checks if climax is toward middle
+        if (i / @notes.length.to_f) >= 0.33 && (i / @notes.length.to_f) <= 0.75 #checks if climax is toward middle
           climax_presence = true
         else
           climax_presence = false
@@ -326,7 +339,7 @@ class CantusFirmusValidatorWithPrintStatements
     end
 
     p "there are #{leaps} leaps"
-    if leaps.to_f / @notes.length.to_f < 0.33
+    if leaps.to_f / @notes.length.to_f <= 0.33
       return true
     else
       return false
