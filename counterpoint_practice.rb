@@ -35,7 +35,7 @@ class CantusFirmusScore
   attr_accessor :original_valid_movements, :notes, :length, :current_available_movements, :current_note_position
 
   def initialize
-    @length = 12
+    @length = 8
     @notes = []
     @length.times do
       @notes << 0
@@ -153,7 +153,7 @@ class CantusFirmusScore
 
   def build_a_lot
     1000.times do
-      @length = 12
+      @length = 8
       @notes = []
       @length.times do
         @notes << 0
@@ -171,22 +171,23 @@ end
 class CantusFirmusFilter
   def self.filter(movements, position, notes)
     @movements = movements
-    @position = position
-    @notes = notes
 
-    self.opposite_direction_step_filter
+    self.opposite_direction_step_filter(movements, position, notes)
+    # self.penultimate_filter
 
     return @movements
   end
 
-  def self.opposite_direction_step_filter
+  def self.opposite_direction_step_filter(m, p, n)
     #checks whether the previous movement was a large leap
-    if (@notes[@position-1] - @notes[@position]).abs() >= 5
-      previous_movement = @notes[@position] - @notes[@position - 1]
-      @movements[@position][:steps].select { |move| move.negative? != previous_movement.negative?}
+    if (n[p-1] - n[p]).abs() >= 5 && p > 1
+      previous_movement = n[p] - n[p - 1]
+      @movements[p][:steps] = m[p][:steps].select { |move| move.negative? != previous_movement.negative?}
     end
   end
 
+  def self.penultimate_filter
+  end
     #no more than 6 steps in same direction in a row
     #consecutive leap must be smaller than first
     #three leaps may not occur in a row
@@ -401,7 +402,7 @@ class CantusFirmusValidatorWithPrintStatements
 end
 
 cantus_firmus = CantusFirmusScore.new
-cantus_firmus.build_a_lot
+cantus_firmus.build_cantus_firmus
 
 #March 29
 #how do i keep track of undesirable features? to what extent do I allow them in generation?
