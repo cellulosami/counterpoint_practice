@@ -35,7 +35,7 @@ class CantusFirmusScore
   attr_accessor :original_valid_movements, :notes, :length, :current_available_movements, :current_note_position
 
   def initialize
-    @length = 10
+    @length = 12
     @notes = []
     @length.times do
       @notes << 0
@@ -78,7 +78,7 @@ class CantusFirmusScore
   end
 
   def execute_movement
-    p @notes
+    # p @notes
     if @previously_leap == false && rand(1..100) <= 25
       if @current_available_movements[@current_note_position][:leaps][0]
         leap
@@ -189,7 +189,7 @@ end
 class CantusFirmusValidator
   def self.valid?(notes)
     @notes = notes
-    return self.penultimate_check && self.range_check && self.climax_check && leap_percentage_check && self.note_repetition_check
+    return self.penultimate_check && self.range_check && self.climax_check && leap_percentage_check && self.note_repetition_check && self.pair_repetition_check && self.triplet_repetition_check
   end
 
   def self.penultimate_check
@@ -263,13 +263,37 @@ class CantusFirmusValidator
       end
     end
 
-    @acceptable_repetitions = true
+    acceptable_repetitions = true
     note_count.keys.each do |key|
       if (note_count[key].to_f / @notes.length.to_f) > 0.25
-        @acceptable_repetitions = false
+        acceptable_repetitions = false
       end
     end
-    return @acceptable_repetitions
+    return acceptable_repetitions
+  end
+
+  def self.pair_repetition_check
+    i = 0
+    acceptable_repetitions = true
+    while i < (@notes.length - 3)
+      if [@notes[i], @notes[i+1]] == [@notes[i+2], @notes[i+3]]
+        acceptable_repetitions = false
+      end
+      i += 1
+    end
+    return acceptable_repetitions
+  end
+
+  def self.triplet_repetition_check
+    i = 0
+    acceptable_repetitions = true
+    while i < (@notes.length - 5)
+      if [@notes[i], @notes[i+1], @notes[i+2]] == [@notes[i+3], @notes[i+4], @notes[i+5]]
+        acceptable_repetitions = false
+      end
+      i += 1
+    end
+    return acceptable_repetitions
   end
 end
 
@@ -357,14 +381,14 @@ class CantusFirmusValidatorWithPrintStatements
     end
     p "note count is #{note_count}"
 
-    @acceptable_repetitions = true
+    acceptable_repetitions = true
     note_count.keys.each do |key|
       if (note_count[key].to_f / @notes.length.to_f) > 0.25
-        @acceptable_repetitions = false
+        acceptable_repetitions = false
         p "unacceptable repetitions"
       end
     end
-    return @acceptable_repetitions
+    return acceptable_repetitions
   end
 end
 
