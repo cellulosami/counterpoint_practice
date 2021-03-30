@@ -79,12 +79,8 @@ class CantusFirmusScore
 
   def execute_movement
     # p @notes
-    if rand(1..100) <= 25
-      if @current_available_movements[@current_note_position][:leaps][0]
-        leap
-      else
-        step
-      end
+    if rand(1..100) <= 25 && @current_available_movements[@current_note_position][:leaps][0]
+      leap
     else
       if @current_available_movements[@current_note_position][:steps][0]
         step
@@ -113,34 +109,12 @@ class CantusFirmusScore
     @current_available_movements[@current_note_position][:leaps] = @current_available_movements[@current_note_position][:leaps] - [@executed_movement]
   end
 
-  def cascade_movement
-    while @current_note_position < ( @length - 2 )
-      determine_current_available_movements
-      execute_movement
-      @current_note_position += 1
-      #p @notes
-    end
-  end
-
   def available_movement_check
-    (@notes[@current_note_position-1] - @notes[@current_note_position]).abs() < 5 || opposite_direction_step_filter #checks whether the previous movement was a large leap
-
-    #no more than 6 steps in same direction in a row
-
-    #consecutive leap must be smaller than first
-    #three leaps may not occur in a row
-    #large leap (5th or more) cannot be followed by a leap
-
     if @current_available_movements[@current_note_position][:steps][0] || @current_available_movements[@current_note_position][:leaps][0]
       return true
     else
       return false
     end
-  end
-
-  def opposite_direction_step_filter
-    previous_movement = @notes[@current_note_position] - @notes[@current_note_position - 1]
-    @current_available_movements[@current_note_position][:steps].select { |move| move.negative? != previous_movement.negative?}
   end
 
   def iterate
@@ -149,7 +123,7 @@ class CantusFirmusScore
         execute_movement
         @current_note_position += 1
         determine_current_available_movements
-        CantusFirmusFilter.filter(@current_available_movements, @current_note_position)
+        @current_available_movements = CantusFirmusFilter.filter(@current_available_movements, @current_note_position, @notes)
       else
         @current_note_position -= 1
         @iterations += 1
@@ -179,7 +153,7 @@ class CantusFirmusScore
 
   def build_a_lot
     1000.times do
-      @length = 8
+      @length = 12
       @notes = []
       @length.times do
         @notes << 0
@@ -195,11 +169,29 @@ class CantusFirmusScore
 end
 
 class CantusFirmusFilter
-  def self.filter(movements, position)
+  def self.filter(movements, position, notes)
     @movements = movements
     @position = position
+    @notes = notes
+
+    self.opposite_direction_step_filter
+
     return @movements
   end
+
+  def self.opposite_direction_step_filter
+    #checks whether the previous movement was a large leap
+    if (@notes[@position-1] - @notes[@position]).abs() >= 5
+      previous_movement = @notes[@position] - @notes[@position - 1]
+      @movements[@position][:steps].select { |move| move.negative? != previous_movement.negative?}
+    end
+  end
+
+    #no more than 6 steps in same direction in a row
+    #consecutive leap must be smaller than first
+    #three leaps may not occur in a row
+    #large leap (5th or more) cannot be followed by a leap
+
 end
 
 class CantusFirmusValidator
@@ -409,7 +401,7 @@ class CantusFirmusValidatorWithPrintStatements
 end
 
 cantus_firmus = CantusFirmusScore.new
-cantus_firmus.build_cantus_firmus
+cantus_firmus.build_a_lot
 
 #March 29
 #how do i keep track of undesirable features? to what extent do I allow them in generation?
