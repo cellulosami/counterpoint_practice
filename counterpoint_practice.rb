@@ -106,7 +106,7 @@ class CantusFirmusScore
     leap_selected  = false
     while leap_selected == false
       leap_offered = @current_available_movements[@current_note_position][:leaps].sample
-      if leap_offered.abs() < rand(1..13)
+      if leap_offered.abs() < rand(1..13) # this condition lowers the probability of larger leaps being chosen
         leap_selected = true
       end
     end
@@ -125,11 +125,24 @@ class CantusFirmusScore
   end
 
   def available_movement_check
-    if @current_available_movements[@current_note_position][:leaps][0] || @current_available_movements[@current_note_position][:steps][0]
+    (@notes[@current_note_position-1] - @notes[@current_note_position]).abs() < 5 || opposite_direction_step_filter #checks whether the previous movement was a large leap
+
+    #no more than 6 steps in same direction in a row
+
+    #consecutive leap must be smaller than first
+    #three leaps may not occur in a row
+    #large leap (5th or more) cannot be followed by a leap
+
+    if @current_available_movements[@current_note_position][:steps][0] || @current_available_movements[@current_note_position][:leaps][0]
       return true
     else
       return false
     end
+  end
+
+  def opposite_direction_step_filter
+    previous_movement = @notes[@current_note_position] - @notes[@current_note_position - 1]
+    @current_available_movements[@current_note_position][:steps].select { |move| move.negative? != previous_movement.negative?}
   end
 
   def iterate
@@ -145,9 +158,9 @@ class CantusFirmusScore
 
     if @possible == true
       if (@notes[@current_note_position-1] - @notes[@current_note_position]).abs() <= 2
-        previously_leap = false
+        @previously_leap = false
       else
-        previously_leap = true
+        @previously_leap = true
       end
       execute_movement
       @current_note_position += 1
@@ -396,5 +409,7 @@ cantus_firmus = CantusFirmusScore.new
 cantus_firmus.build_cantus_firmus
 
 #March 29
-#need to add many more validations
 #how do i keep track of undesirable features? to what extent do I allow them in generation?
+
+#march 30
+#instead of checking for all traits after generation, I need to check for some DURING generation in order to reduce load times. A few are listed in available_movement_check (line 127). I must refactor the execute/cascade/check to stop when the incomplete cantus firmus can already be shown to not work instead of building out the whole thing every time
