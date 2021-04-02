@@ -78,7 +78,7 @@ class CantusFirmusScore
 
   def execute_movement
     # p @notes
-    if rand(1..100) <= 25 && @current_available_movements[@current_note_position][:leaps][0]
+    if rand(1..100) <= 33 && @current_available_movements[@current_note_position][:leaps][0]
       leap
     else
       if @current_available_movements[@current_note_position][:steps][0]
@@ -117,7 +117,7 @@ class CantusFirmusScore
   end
 
   def iterate
-    while @current_note_position < ( @length - 2 )
+    while @current_note_position < ( @length - 1 )
       if available_movement_check == true
         execute_movement
         @current_note_position += 1
@@ -176,9 +176,11 @@ class CantusFirmusFilter
 
     self.opposite_direction_step_filter
     self.penultimate_filter
+    self.ultimate_filter
     self.step_repetition_filter
     self.consecutive_leap_filter
     self.palindrome_filter
+    self.note_repetition_filter
 
     return @movements
   end
@@ -201,17 +203,32 @@ class CantusFirmusFilter
     end
   end
 
+  def self.ultimate_filter
+    if @position == @notes.length - 2
+      @movements[@position][:leaps] = []
+      @movements[@position][:steps] = @movements[@position][:steps].select { |move| @notes[@position] + move == 0 }
+    end
+  end
+
   def self.step_repetition_filter
     if self.positive_step_repetition_check
+      # p "positive step repetition filter"
+      # p @position
+      # p @notes
+      # p @movements[@position]
+      # p "becomes..."
       @movements[@position][:steps] = @movements[@position][:steps].select { |move| move.negative? == true}
       @movements[@position][:leaps] = @movements[@position][:leaps].select { |move| move.negative? == true}
+      # p @movements[@position]
     elsif self.negative_step_repetition_check
       @movements[@position][:steps] = @movements[@position][:steps].select { |move| move.negative? == false}
       @movements[@position][:leaps] = @movements[@position][:leaps].select { |move| move.negative? == false}
     end
   end
 
+  #not included in self.filter
   def self.positive_step_repetition_check
+    #checks for four positive steps in a row
     @position >= 4 && 
     (@notes[@position - 4] + 1 == @notes[@position - 3] || @notes[@position - 4] + 2 == @notes[@position - 3]) && 
     (@notes[@position - 3] + 1 == @notes[@position - 2] || @notes[@position - 3] + 2 == @notes[@position - 2]) && 
@@ -219,7 +236,9 @@ class CantusFirmusFilter
     (@notes[@position - 1] + 1 == @notes[@position] || @notes[@position - 1] + 2 == @notes[@position])
   end
 
+  #not included in self.filter
   def self.negative_step_repetition_check 
+    #checks for five negative steps in a row
     @position >= 5 && 
     (@notes[@position - 5] - 1 == @notes[@position - 4] || @notes[@position - 5] - 2 == @notes[@position - 4]) && 
     (@notes[@position - 4] - 1 == @notes[@position - 3] || @notes[@position - 4] - 2 == @notes[@position - 3]) && 
@@ -231,9 +250,9 @@ class CantusFirmusFilter
   def self.consecutive_leap_filter
     if @position >= 1 && (@notes[@position] - @notes[@position - 1]).abs() >= 3
 
-      @movements[@position][:leaps] = @movements[@position][:leaps].select { |move| move != -(@notes[@position] - @notes[@position - 1])}
+      @movements[@position][:leaps] = @movements[@position][:leaps].select { |move| move != -(@notes[@position] - @notes[@position - 1])} #filters out leaps exactly opposite to the previous
 
-      if @position >= 2 && (@notes[@position - 1] - @notes[@position - 2]).abs() >= 3
+      if @position >= 2 && (@notes[@position - 1] - @notes[@position - 2]).abs() >= 3 #filters out three leaps in a row
 
         @movements[@position][:leaps] = []
 
@@ -246,12 +265,15 @@ class CantusFirmusFilter
 
   def self.palindrome_filter
     if @position >= 3 && @notes[@position] == @notes[@position - 2]
-      if @notes[@position - 3].abs() <= 2
+      if (@notes[@position] - @notes[@position - 3]).abs() <= 2
         @movements[@position][:steps] = @movements[@position][:steps].select { |move| (@notes[@position] + move) != @notes[@position - 3] }
       else
         @movements[@position][:leaps] = @movements[@position][:leaps].select { |move| (@notes[@position] + move) != @notes[@position - 3] }
       end
     end
+  end
+
+  def self.note_repetition_filter
   end
     #three leaps may not occur in a row
     #large leap (5th or more) cannot be followed by a leap
@@ -317,7 +339,7 @@ class CantusFirmusValidator
       i += 1
     end
 
-    if leaps.to_f / @notes.length.to_f < 0.33
+    if leaps.to_f / @notes.length.to_f <= 0.33
       return true
     else
       return false
@@ -464,7 +486,7 @@ end
 
 cantus_firmus = CantusFirmusScore.new
 cantus_firmus.build_cantus_firmus
-cantus_firmus.build_a_lot(12, 1)
+cantus_firmus.build_a_lot(12, 100)
 
 #March 29
 #how do i keep track of undesirable features? to what extent do I allow them in generation?
