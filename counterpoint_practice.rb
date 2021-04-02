@@ -178,6 +178,7 @@ class CantusFirmusFilter
     self.penultimate_filter
     self.step_repetition_filter
     self.consecutive_leap_filter
+    self.palindrome_filter
 
     return @movements
   end
@@ -193,11 +194,9 @@ class CantusFirmusFilter
   def self.penultimate_filter
     if @position == (@notes.length - 3)
       @movements[@position][:steps] = @movements[@position][:steps].select { |move| (@notes[@position] + move) <= 2 && (@notes[@position] + move) >= -2}
-      @movements[@position][:leaps] = @movements[@position][:leaps].select { |move| (@notes[@position] + move) <= 2 && (@notes[@position] + move) >= -2}
-
+      @movements[@position][:leaps] = []
       if @notes[@position].abs() >= 5
         @movements[@position][:steps] = @movements[@position][:steps].select { |move| @notes[@position].negative? != (@notes[@position] + move).negative? }
-        @movements[@position][:leaps] = @movements[@position][:leaps].select { |move| @notes[@position].negative? != (@notes[@position] + move).negative? }
       end
     end
   end
@@ -230,15 +229,30 @@ class CantusFirmusFilter
   end
 
   def self.consecutive_leap_filter
-    if (@notes[@position] - @notes[@position - 1]).abs() >= 3
+    if @position >= 1 && (@notes[@position] - @notes[@position - 1]).abs() >= 3
+
       @movements[@position][:leaps] = @movements[@position][:leaps].select { |move| move != -(@notes[@position] - @notes[@position - 1])}
-      if (@notes[@position] - @notes[@position - 1]).abs() >= 5
+
+      if @position >= 2 && (@notes[@position - 1] - @notes[@position - 2]).abs() >= 3
+
+        @movements[@position][:leaps] = []
+
+      elsif (@notes[@position] - @notes[@position - 1]).abs() >= 5
         #filters out equal or larger leaps in the same direction as a previous leaps
         @movements[@position][:leaps] = @movements[@position][:leaps].select { |move| move.negative? != (@notes[@position] - @notes[@position - 1]).negative? || move.abs() < (@notes[@position] - @notes[@position - 1]).abs() }
       end
     end
   end
-    #consecutive leap must be smaller than first
+
+  def self.palindrome_filter
+    if @position >= 3 && @notes[@position] == @notes[@position - 2]
+      if @notes[@position - 3].abs() <= 2
+        @movements[@position][:steps] = @movements[@position][:steps].select { |move| (@notes[@position] + move) != @notes[@position - 3] }
+      else
+        @movements[@position][:leaps] = @movements[@position][:leaps].select { |move| (@notes[@position] + move) != @notes[@position - 3] }
+      end
+    end
+  end
     #three leaps may not occur in a row
     #large leap (5th or more) cannot be followed by a leap
 
@@ -259,8 +273,7 @@ class CantusFirmusValidator
   end
 
   def self.climax_check
-    highest_note = (@notes[0] + 2) #starting value assures climax is at least a third above starting pitch
-    highest_note_index = 0
+    highest_note = 2 #starting value assures climax is at least a third above starting pitch
     climax_presence = false
 
     i = 0
@@ -268,7 +281,7 @@ class CantusFirmusValidator
       if @notes[i] > highest_note
         highest_note = @notes[i]
         p
-        if (i / @notes.length.to_f) >= 0.25 && (i / @notes.length.to_f) <= 0.75 #checks if climax is toward middle
+        if ((i + 1) / @notes.length.to_f) > 0.25 && ((i + 1) / @notes.length.to_f) < 0.75 #checks if climax is toward middle
           climax_presence = true
         else
           climax_presence = false
@@ -372,8 +385,7 @@ class CantusFirmusValidatorWithPrintStatements
   end
 
   def self.climax_check
-    highest_note = (@notes[0] + 2) #starting value assures climax is at least a third above starting pitch
-    highest_note_index = 0
+    highest_note = 2 #starting value assures climax is at least a third above starting pitch
     climax_presence = false
 
     i = 0
@@ -381,7 +393,7 @@ class CantusFirmusValidatorWithPrintStatements
       if @notes[i] > highest_note
         highest_note = @notes[i]
         p
-        if (i / @notes.length.to_f) >= 0.33 && (i / @notes.length.to_f) <= 0.75 #checks if climax is toward middle
+        if ((i + 1) / @notes.length.to_f) > 0.25 && ((i + 1) / @notes.length.to_f) < 0.75 #checks if climax is toward middle
           climax_presence = true
         else
           climax_presence = false
@@ -452,7 +464,7 @@ end
 
 cantus_firmus = CantusFirmusScore.new
 cantus_firmus.build_cantus_firmus
-cantus_firmus.build_a_lot(12, 100)
+cantus_firmus.build_a_lot(12, 1)
 
 #March 29
 #how do i keep track of undesirable features? to what extent do I allow them in generation?
