@@ -237,6 +237,7 @@ class CantusFirmusFilter
   def self.negative_step_repetition_check 
     #checks for five negative steps in a row
     @position >= 5 && 
+    (@notes[@position - 4] - @notes[@position - 5]).negative? &&
     (@notes[@position - 3] - @notes[@position - 4]).negative? &&
     (@notes[@position - 2] - @notes[@position - 3]).negative? &&
     (@notes[@position - 1] - @notes[@position - 2]).negative? &&
