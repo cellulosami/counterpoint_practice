@@ -170,9 +170,10 @@ end
 
 class CantusFirmusFilter
   def self.filter(movements, position, notes)
-    @movements = movements
     @position = position
     @notes = notes
+    @steps = movements[position][:steps]
+    @leaps = movements[position][:leaps]
 
     self.opposite_direction_step_filter
     self.penultimate_filter
@@ -182,47 +183,52 @@ class CantusFirmusFilter
     self.palindrome_filter
     self.note_repetition_filter
 
-    return @movements
+    result = movements
+    result[position][:steps] = @steps
+    result[position][:leaps] = @leaps
+    return result
   end
 
   def self.opposite_direction_step_filter
     #checks whether the previous movement was a large leap
-    if (@notes[@position-1] - @notes[@position]).abs() >= 5
+    if @steps[0] && (@notes[@position-1] - @notes[@position]).abs() >= 5
       previous_movement = @notes[@position] - @notes[@position - 1]
-      @movements[@position][:steps] = @movements[@position][:steps].select { |move| move.negative? != previous_movement.negative?}
+      @steps = @steps.select { |move| move.negative? != previous_movement.negative?}
     end
   end
 
+
+  #THIS IS BROKEN
   def self.penultimate_filter
-    if @position == (@notes.length - 3)
-      @movements[@position][:steps] = @movements[@position][:steps].select { |move| (@notes[@position] + move) <= 2 && (@notes[@position] + move) >= -2}
-      @movements[@position][:leaps] = []
+    if @steps[0] && @position == (@notes.length - 3)
+      @steps = @steps.select { |move| (@notes[@position] + move) <= 2 && (@notes[@position] + move) >= -2}
+      @leaps = []
       if @notes[@position].abs() >= 5
-        @movements[@position][:steps] = @movements[@position][:steps].select { |move| @notes[@position].negative? != (@notes[@position] + move).negative? }
+        @steps = @steps.select { |move| @notes[@position].negative? != (@notes[@position] + move).negative? }
       end
     end
   end
 
   def self.ultimate_filter
     if @position == @notes.length - 2
-      @movements[@position][:leaps] = []
-      @movements[@position][:steps] = @movements[@position][:steps].select { |move| @notes[@position] + move == 0 }
+      @leaps = []
+      @steps = @steps.select { |move| @notes[@position] + move == 0 }
     end
   end
 
   def self.step_repetition_filter
-    if self.positive_step_repetition_check
+    if (@steps[0] || @leaps[0]) && self.positive_step_repetition_check
       # p "positive step repetition filter"
       # p @position
       # p @notes
       # p @movements[@position]
       # p "becomes..."
-      @movements[@position][:steps] = @movements[@position][:steps].select { |move| move.negative? == true}
-      @movements[@position][:leaps] = @movements[@position][:leaps].select { |move| move.negative? == true}
+      @steps = @steps.select { |move| move.negative? == true}
+      @leaps = @leaps.select { |move| move.negative? == true}
       # p @movements[@position]
     elsif self.negative_step_repetition_check
-      @movements[@position][:steps] = @movements[@position][:steps].select { |move| move.negative? == false}
-      @movements[@position][:leaps] = @movements[@position][:leaps].select { |move| move.negative? == false}
+      @steps = @steps.select { |move| move.negative? == false}
+      @leaps = @leaps.select { |move| move.negative? == false}
     end
   end
 
@@ -248,27 +254,27 @@ class CantusFirmusFilter
   end
 
   def self.consecutive_leap_filter
-    if @position >= 1 && (@notes[@position] - @notes[@position - 1]).abs() >= 3
+    if @leaps[0] && @position >= 1 && (@notes[@position] - @notes[@position - 1]).abs() >= 3
 
-      @movements[@position][:leaps] = @movements[@position][:leaps].select { |move| move != -(@notes[@position] - @notes[@position - 1])} #filters out leaps exactly opposite to the previous
+      @leaps = @leaps.select { |move| move != -(@notes[@position] - @notes[@position - 1])} #filters out leaps exactly opposite to the previous
 
       if @position >= 2 && (@notes[@position - 1] - @notes[@position - 2]).abs() >= 3 #filters out three leaps in a row
 
-        @movements[@position][:leaps] = []
+        @leaps = []
 
       elsif (@notes[@position] - @notes[@position - 1]).abs() >= 5
         #filters out equal or larger leaps in the same direction as a previous leaps
-        @movements[@position][:leaps] = @movements[@position][:leaps].select { |move| move.negative? != (@notes[@position] - @notes[@position - 1]).negative? || move.abs() < (@notes[@position] - @notes[@position - 1]).abs() }
+        @leaps = @leaps.select { |move| move.negative? != (@notes[@position] - @notes[@position - 1]).negative? || move.abs() < (@notes[@position] - @notes[@position - 1]).abs() }
       end
     end
   end
 
   def self.palindrome_filter
-    if @position >= 3 && @notes[@position] == @notes[@position - 2]
+    if (@steps[0] || @leaps[0]) && @position >= 3 && @notes[@position] == @notes[@position - 2]
       if (@notes[@position] - @notes[@position - 3]).abs() <= 2
-        @movements[@position][:steps] = @movements[@position][:steps].select { |move| (@notes[@position] + move) != @notes[@position - 3] }
+        @steps = @steps.select { |move| (@notes[@position] + move) != @notes[@position - 3] }
       else
-        @movements[@position][:leaps] = @movements[@position][:leaps].select { |move| (@notes[@position] + move) != @notes[@position - 3] }
+        @leaps = @leaps.select { |move| (@notes[@position] + move) != @notes[@position - 3] }
       end
     end
   end
