@@ -197,15 +197,10 @@ class CantusFirmusFilter
     end
   end
 
-
-  #THIS IS BROKEN
   def self.penultimate_filter
-    if @steps[0] && @position == (@notes.length - 3)
-      @steps = @steps.select { |move| (@notes[@position] + move) <= 2 && (@notes[@position] + move) >= -2}
-      @leaps = []
-      if @notes[@position].abs() >= 5
-        @steps = @steps.select { |move| @notes[@position].negative? != (@notes[@position] + move).negative? }
-      end
+    if (@steps[0] || @leaps[0]) && @position == (@notes.length - 3)
+      @steps = @steps.select { |move| (@notes[@position] + move) <= 2 && (@notes[@position] + move) >= -2 }
+      @leaps = @leaps.select { |move| (@notes[@position] + move) <= 2 && (@notes[@position] + move) >= 2 }
     end
   end
 
