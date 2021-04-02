@@ -172,21 +172,21 @@ class CantusFirmusFilter
   def self.filter(movements, position, notes)
     @position = position
     @notes = notes
+    @movements = movements
     @steps = movements[position][:steps]
     @leaps = movements[position][:leaps]
 
     self.opposite_direction_step_filter
     self.penultimate_filter
     self.ultimate_filter
-    self.step_repetition_filter
+    self.direction_repetition_filter
     self.consecutive_leap_filter
     self.palindrome_filter
     self.note_repetition_filter
 
-    result = movements
-    result[position][:steps] = @steps
-    result[position][:leaps] = @leaps
-    return result
+    @movements[position][:steps] = @steps
+    @movements[position][:leaps] = @leaps
+    return @movements
   end
 
   def self.opposite_direction_step_filter
@@ -211,41 +211,36 @@ class CantusFirmusFilter
     end
   end
 
-  def self.step_repetition_filter
-    if (@steps[0] || @leaps[0]) && self.positive_step_repetition_check
-      # p "positive step repetition filter"
-      # p @position
-      # p @notes
-      # p @movements[@position]
-      # p "becomes..."
-      @steps = @steps.select { |move| move.negative? == true}
-      @leaps = @leaps.select { |move| move.negative? == true}
-      # p @movements[@position]
-    elsif self.negative_step_repetition_check
-      @steps = @steps.select { |move| move.negative? == false}
-      @leaps = @leaps.select { |move| move.negative? == false}
+  def self.direction_repetition_filter
+    if @steps[0] || @leaps[0]
+      if self.positive_step_repetition_check
+        @steps = @steps.select { |move| move.negative? == true}
+        @leaps = @leaps.select { |move| move.negative? == true}
+      elsif self.negative_step_repetition_check
+        @steps = @steps.select { |move| move.negative? == false}
+        @leaps = @leaps.select { |move| move.negative? == false}
+      end
     end
   end
 
   #not included in self.filter
   def self.positive_step_repetition_check
-    #checks for four positive steps in a row
+    #checks for four positive moves in a row
     @position >= 4 && 
-    (@notes[@position - 4] + 1 == @notes[@position - 3] || @notes[@position - 4] + 2 == @notes[@position - 3]) && 
-    (@notes[@position - 3] + 1 == @notes[@position - 2] || @notes[@position - 3] + 2 == @notes[@position - 2]) && 
-    (@notes[@position - 2] + 1 == @notes[@position - 1] || @notes[@position - 2] + 2 == @notes[@position - 1]) && 
-    (@notes[@position - 1] + 1 == @notes[@position] || @notes[@position - 1] + 2 == @notes[@position])
+    (@notes[@position - 3] - @notes[@position - 4]).positive? &&
+    (@notes[@position - 2] - @notes[@position - 3]).positive? &&
+    (@notes[@position - 1] - @notes[@position - 2]).positive? &&
+    (@notes[@position] - @notes[@position - 1]).positive?
   end
 
   #not included in self.filter
   def self.negative_step_repetition_check 
     #checks for five negative steps in a row
     @position >= 5 && 
-    (@notes[@position - 5] - 1 == @notes[@position - 4] || @notes[@position - 5] - 2 == @notes[@position - 4]) && 
-    (@notes[@position - 4] - 1 == @notes[@position - 3] || @notes[@position - 4] - 2 == @notes[@position - 3]) && 
-    (@notes[@position - 3] - 1 == @notes[@position - 2] || @notes[@position - 3] - 2 == @notes[@position - 2]) && 
-    (@notes[@position - 2] - 1 == @notes[@position - 1] || @notes[@position - 2] - 2 == @notes[@position - 1]) && 
-    (@notes[@position - 1] - 1 == @notes[@position] || @notes[@position - 1] - 2 == @notes[@position])
+    (@notes[@position - 3] - @notes[@position - 4]).negative? &&
+    (@notes[@position - 2] - @notes[@position - 3]).negative? &&
+    (@notes[@position - 1] - @notes[@position - 2]).negative? &&
+    (@notes[@position] - @notes[@position - 1]).negative?
   end
 
   def self.consecutive_leap_filter
@@ -487,7 +482,7 @@ end
 
 cantus_firmus = CantusFirmusScore.new
 cantus_firmus.build_cantus_firmus
-cantus_firmus.build_a_lot(12, 100)
+cantus_firmus.build_a_lot(12, 1)
 
 #March 29
 #how do i keep track of undesirable features? to what extent do I allow them in generation?
