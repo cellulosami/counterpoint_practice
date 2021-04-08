@@ -100,7 +100,7 @@ class CantusFirmusScore
     leap_selected  = false
     while leap_selected == false
       leap_offered = @current_available_movements[@current_note_position][:leaps].sample
-      if leap_offered.abs() < rand(1..13) # this condition lowers the probability of larger leaps being chosen
+      if leap_offered.abs() < rand(1..17) # this condition lowers the probability of larger leaps being chosen
         leap_selected = true
       end
     end
@@ -483,7 +483,7 @@ end
 
 cantus_firmus = CantusFirmusScore.new
 cantus_firmus.build_cantus_firmus
-cantus_firmus.build_a_lot(12, 1)
+cantus_firmus.build_a_lot(16, 10)
 
 #March 29
 #how do i keep track of undesirable features? to what extent do I allow them in generation?
