@@ -11,7 +11,7 @@
 # - allowable notes: 0, 2, 4, 5, 7, 9, 11, 12 (etc.)
 # - first and final notes must be 0
 # - penultimate note must be -1 or 2
-# - there must be a single highest note that is above the starting/ending note. It may not be the leading tone (VII or 11 (10 in some modes?)). Must occure on a strong beat
+# - there must be a single highest note that is above the starting/ending note. It may not be the leading tone (VII or 11 (10 in some modes?)). Must occur on a strong beat
 # - range of notes should be a 10th (17 or 16 chromatic pitches at most depending on mode) or less
 # - no more than 4 leaps in a row
 # - "No series of three notes may define a 7th or larger dissonance"
